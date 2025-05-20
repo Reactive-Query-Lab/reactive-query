@@ -7,9 +7,11 @@
 - Storing the data shouldn't have overhead and just directly be with rxjs.
 - User should be able to store extra data in the query and command model.
 - Both query and command model should be singleton.
- 
+- After cache time data should be removed from the store.
+
 ### Query model
 - User with one refresh method should be able to refresh data in query model.
+- After cache or stale time is expired, data should be fetched automaticaly.
 
 ### Command model
 - User should be able to store parameters in command models.
