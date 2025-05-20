@@ -1,0 +1,33 @@
+@startuml Query model class diagram
+class KeyStore<DATA> {
+  isFetched: boolean;
+  isFetching: boolean;
+  data: DATA;
+  staleTime?: number;
+  staled: boolean;
+  lastFetchedTime?: number;
+}
+
+class Store<DATA> {
+  query: {[key]: KeyStore}
+  setIsLoading(isLoading: boolean; key: string): void
+  setError(error: string; key: string): void
+  setIsFetched(isFetched: boolean; key: string): void
+  setIsFetching(isFetching: boolean; key: string): void
+  setIsStaled(isStaled: boolean; key: string): void
+  setData(data: DATA, key: string): void
+  invalidateKey(key: string): void
+  invalidate(): void
+  setStore(store: KeyStore; key: string): void
+  setLastFetchedTime(time: string; key: string): void
+  startUpdate(key: string): void
+}
+
+abstract QueryModel<PARAMS, DATA> {
+  initialData: DATA
+  query(params: PARAMS): Observable<QueryResponse<DATA, PARAMS>>
+}
+
+QueryModel --> Store
+Store --> KeyStore
+@enduml
