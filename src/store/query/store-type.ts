@@ -1,3 +1,5 @@
+import { Observable } from "rxjs";
+
 export type BaseReactiveKeyStore<DATA> = {
   isLoading: boolean;
   error?: string;
@@ -25,7 +27,18 @@ export type QueryStoreEvents<DATA, FAILURE = unknown> = {
   setStore(data: BaseReactiveKeyStore<DATA>, key: string): void;
   setLastFetchedTime(time: number, key: string): void;
   invalidateKey(key: string): void;
+  /**
+   * Set all keys as staled
+   */
   invalidate(): void;
+  /**
+   * Remove all keys
+   */
+  resetStore(): void;
   setError(key: string, failure?: FAILURE): void;
   setIsLoading(isLoading: boolean, key: string): void;
 };
+
+export type ReactiveQueryStore<DATA, FAILURE = unknown> = {
+  store$: Observable<{ [key: string]: BaseReactiveKeyStore<DATA> }>;
+} & QueryStoreEvents<DATA, FAILURE>;
