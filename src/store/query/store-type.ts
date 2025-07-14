@@ -2,7 +2,7 @@ import { Observable } from "rxjs";
 
 export type BaseReactiveKeyStore<DATA> = {
   isLoading: boolean;
-  error?: string;
+  error?: unknown;
   isFetched: boolean;
   isFetching: boolean;
   data: DATA;
