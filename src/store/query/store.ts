@@ -1,11 +1,10 @@
 import {
-  BaseReactiveKeyStore,
-  ReactiveQueryStore,
+  BaseReactiveStore,
+  ReactiveQueryVault,
 } from "@/store/query/store-type";
 import {
   invalidate,
   invalidateKey,
-  resetStore,
   setData,
   setError,
   setIsFetched,
@@ -13,19 +12,24 @@ import {
   setIsLoading,
   setLastFetchedTime,
   setStore,
+  getStore,
+  resetVault,
 } from "@/store/query/store-methods";
 import { BehaviorSubject } from "rxjs";
 
-export default function createStore<T, F = unknown>(init?: {
-  initialValue: T;
-  initalKey: string;
-  /**
-   * In miliseconds
-   */
-  initStaleTime?: number;
-}): ReactiveQueryStore<T, F> {
+export default function createVault<T, E = undefined, F = unknown>(
+  init?: {
+    initialValue: T;
+    initalKey: string;
+    /**
+     * In miliseconds
+     */
+    initStaleTime?: number;
+  },
+  customEvents?: E,
+): ReactiveQueryVault<T, E, F> {
   const store$ = new BehaviorSubject<{
-    [key: string]: BaseReactiveKeyStore<T>;
+    [key: string]: BaseReactiveStore<T>;
   }>({
     ...(init?.initialValue && init?.initalKey
       ? {
@@ -52,8 +56,10 @@ export default function createStore<T, F = unknown>(init?: {
     setIsFetched: setIsFetched(store$),
     setIsFetching: setIsFetching(store$),
     setLastFetchedTime: setLastFetchedTime(store$),
-    resetStore: resetStore(store$),
+    resetVault: resetVault(store$),
     setError: setError(store$),
     setIsLoading: setIsLoading(store$),
-  };
+    getStore: getStore(store$),
+    ...(customEvents || {}),
+  } as ReactiveQueryVault<T, E, F>;
 }
