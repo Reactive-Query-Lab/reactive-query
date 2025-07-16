@@ -32,15 +32,49 @@ export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
 
   protected abstract refresh(params?: unknown): Promise<DATA>;
 
-  protected configs = {
+  private DEFAULT_CACHE_TIME = 3 * 60 * 1000; // 3 minute
+
+  protected configs: {
+    maxRetryCall: number;
+    cachTime: number;
+    replaceOnNewValue: boolean;
+    initStore:
+      | {
+          key: string;
+          value: DATA;
+          staleTime?: number;
+        }
+      | undefined;
+  } = {
     /**
      * Maximum time to call refresh method on getting left response
      */
     maxRetryCall: 1,
+
+    /**
+     * Maximum amount of time before empty the store
+     */
+    cachTime: this.DEFAULT_CACHE_TIME,
+
+    /**
+     * Replace the store with other stores in the vault when new data arrives
+     */
+    replaceOnNewValue: false,
+
+    /**
+     * Default store to init the vault with one default store
+     */
+    initStore: undefined,
   };
 
   constructor() {
-    this.store = createVault();
+    this.store = createVault({
+      replaceOnNewValue: this.configs.replaceOnNewValue,
+      initCacheTime: this.configs.cachTime,
+      initalKey: this.configs.initStore?.key,
+      initialValue: this.configs.initStore?.value,
+      initStaleTime: this.configs.initStore?.staleTime,
+    });
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     if (this.constructor.instance) {
@@ -96,7 +130,7 @@ export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
        *  refresh method again.
        * If a data will be staled, the data will be kept in the and return it but
        *  at the same time refresh method will be called to get fresh data.
-       * in seconds
+       * in miliseconds
        * by default it's undefined which means always data will be considred as fresh data.
        */
       staleTime?: number;

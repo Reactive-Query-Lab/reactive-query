@@ -35,11 +35,12 @@ export function invalidateKey<T>(
 
 export function setData<T>(
   store$: BehaviorSubject<{ [key: string]: BaseReactiveStore<T> }>,
+  replace?: boolean,
 ): (data: T, key: string) => void {
   return (data: T, key: string) => {
     const currentStore = store$.getValue();
     const updatedStore = {
-      ...currentStore,
+      ...(replace ? {} : currentStore),
       [key]: { ...currentStore[key], data },
     };
     store$.next(updatedStore);
@@ -48,10 +49,11 @@ export function setData<T>(
 
 export function setStore<T>(
   store$: BehaviorSubject<{ [key: string]: BaseReactiveStore<T> }>,
+  replace?: boolean,
 ): (data: BaseReactiveStore<T>, key: string) => void {
   return (data: BaseReactiveStore<T>, key: string) => {
     const currentStore = store$.getValue();
-    const updatedStore = { ...currentStore, [key]: data };
+    const updatedStore = { ...(replace ? {} : currentStore), [key]: data };
     store$.next(updatedStore);
   };
 }

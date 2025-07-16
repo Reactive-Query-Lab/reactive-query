@@ -1,6 +1,6 @@
 import createVault from "@/store/query/store";
 import { BaseReactiveStore } from "@/store/query/store-type";
-import { firstValueFrom, Observable } from "rxjs";
+import { firstValueFrom, lastValueFrom, Observable, take } from "rxjs";
 
 type Data = {
   name: string;
@@ -48,6 +48,77 @@ describe("createVault", () => {
         expect(data[initKey].lastFetchedTime).toEqual(
           fakeCurrentDate.getTime(),
         );
+        vi.useRealTimers();
+      });
+    });
+
+    describe("replace", () => {
+      it("With replace should set to new store and prev data should be removed", async () => {
+        // * Arrange
+        // ! Act
+        const store = createVault({
+          initalKey: "test",
+          initialValue: { name: "test" },
+          replaceOnNewValue: true,
+        });
+
+        const newData = { name: "new" };
+        const newKey = "test2";
+        store.setData(newData, newKey);
+
+        const data = await lastValueFrom(
+          store.store$.pipe(take(1)) as Observable<{
+            [key: string]: BaseReactiveStore<Data>;
+          }>,
+        );
+        // ? Assert
+        expect(data).toEqual({
+          [newKey]: {
+            data: newData,
+          },
+        });
+        vi.useRealTimers();
+      });
+    });
+
+    describe("caching", () => {
+      it("Should empty the store after the cache time", async () => {
+        // * Arrange
+        const fakeCurrentDate = new Date();
+        vi.useFakeTimers();
+        vi.setSystemTime(fakeCurrentDate);
+        const fakeCacheTime = 10000;
+        // ! Act
+        const store = createVault({
+          initalKey: "test",
+          initialValue: { name: "test" },
+          initCacheTime: fakeCacheTime,
+        });
+        await firstValueFrom(
+          store.store$ as Observable<{
+            [key: string]: BaseReactiveStore<Data>;
+          }>,
+        );
+
+        vi.advanceTimersToNextTimer();
+        const data = await lastValueFrom(
+          store.store$.pipe(take(1)) as Observable<{
+            [key: string]: BaseReactiveStore<Data>;
+          }>,
+        );
+        // ? Assert
+        expect(data).toEqual({
+          test: {
+            data: { name: "test" },
+            isLoading: false,
+            staled: false,
+            error: undefined,
+            lastFetchedTime: new Date().getTime(),
+            staleTime: undefined,
+            isFetched: true,
+            isFetching: false,
+          },
+        });
         vi.useRealTimers();
       });
     });
