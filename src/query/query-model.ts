@@ -3,7 +3,8 @@ import {
   BaseReactiveStore,
   ReactiveQueryVault,
 } from "@/store/query/store-type";
-import recursiveCallWithRetry from "@/helpers/functions";
+import recursiveCallWithRetry, { isObject } from "@/helpers/functions";
+import createVault from "@/store/query/store";
 
 export type QueryResponse<DATA = undefined> = Omit<
   BaseReactiveStore<DATA>,
@@ -23,11 +24,11 @@ export const getInitQueryResponse = <DATA>(
 });
 
 export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
-  protected abstract store: EVENTS extends undefined
-    ? ReactiveQueryVault<DATA>
-    : ReactiveQueryVault<DATA, EVENTS>;
+  protected store: ReactiveQueryVault<DATA, EVENTS>;
 
-  protected abstract store$: ReactiveQueryVault<DATA, EVENTS>["store$"];
+  protected get store$(): ReactiveQueryVault<DATA, EVENTS>["store$"] {
+    return this.store.store$ as ReactiveQueryVault<DATA, EVENTS>["store$"];
+  }
 
   protected abstract refresh(params?: unknown): Promise<DATA>;
 
@@ -37,6 +38,21 @@ export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
      */
     maxRetryCall: 1,
   };
+
+  constructor() {
+    this.store = createVault();
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    if (this.constructor.instance) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error
+
+      return this.constructor.instance;
+    }
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    this.constructor.instance = this;
+  }
 
   /**
    * @returns Checks if data is staled or not (manually or through time)
@@ -73,9 +89,9 @@ export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
   }
 
   query(params?: unknown): Observable<QueryResponse<DATA>> {
-    const hashedKey = this.getHashedKey(params);
     return this.store$.pipe(
       rxMap((vault) => {
+        const hashedKey = this.getHashedKey(params);
         let storeToResponse =
           vault[hashedKey] ?? getInitQueryResponse(undefined);
         if (!this.isStoreValidToProcess(hashedKey)) return storeToResponse;
@@ -119,7 +135,24 @@ export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
       lastParamsToHash = params;
     }
 
-    return JSON.stringify([lastParamsToHash]);
+    return JSON.stringify(this.sortParams(lastParamsToHash));
+  }
+
+  /**
+   * @returns one nested level sorted version of params if it's an object
+   */
+  private sortParams(params: unknown) {
+    if (!isObject(params)) return params;
+
+    const result: Record<string, unknown> = {};
+
+    Object.keys(params)
+      .sort()
+      .forEach((key) => {
+        result[key] = params[key];
+      });
+
+    return result;
   }
 
   private async refreshHandler(
@@ -144,7 +177,7 @@ export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
     } catch (error) {
       return {
         ...store,
-        error: error,
+        error,
         isLoading: false,
         isFetching: false,
       };

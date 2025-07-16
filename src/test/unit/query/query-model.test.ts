@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { firstValueFrom, lastValueFrom, take } from "rxjs";
-import createVault from "@/store/query/store";
 import ReactiveQueryModel from "@/query/query-model";
+import createVault from "@/store/query/store";
+import { firstValueFrom, lastValueFrom, take } from "rxjs";
 
 // Test data types
 type StringData = string;
@@ -25,7 +26,6 @@ type ComplexData = {
 // Concrete implementation for testing
 class TestQueryModel extends ReactiveQueryModel<StringData> {
   protected store = createVault<StringData>();
-  protected store$ = this.store.store$;
 
   protected async refresh(params?: unknown): Promise<StringData> {
     // Simulate different responses based on params
@@ -47,7 +47,6 @@ class TestQueryModel extends ReactiveQueryModel<StringData> {
 
 class ComplexDataQueryModel extends ReactiveQueryModel<ComplexData> {
   protected store = createVault<ComplexData>();
-  protected store$ = this.store.store$;
 
   protected async refresh(_params?: unknown): Promise<ComplexData> {
     return {
@@ -71,7 +70,6 @@ class ComplexDataQueryModel extends ReactiveQueryModel<ComplexData> {
 
 class ErrorThrowingQueryModel extends ReactiveQueryModel<StringData> {
   protected store = createVault<StringData>();
-  protected store$ = this.store.store$;
 
   protected async refresh(_params?: unknown): Promise<StringData> {
     throw new Error("Simulated error");
@@ -95,7 +93,7 @@ describe("ReactiveQueryModel", () => {
       const model = new TestQueryModel();
 
       // ? Assert
-      expect(model["configs"]).toEqual({
+      expect((model as any).configs).toEqual({
         maxRetryCall: 1,
       });
     });
@@ -210,6 +208,26 @@ describe("ReactiveQueryModel", () => {
     });
   });
 
+  describe("singleton", () => {
+    it("Should return different instances for two different child", () => {
+      // * Arrange
+      const model1 = new TestQueryModel();
+      const model2 = new ComplexDataQueryModel();
+
+      // ? Assert
+      expect(model1).not.toBe(model2);
+    });
+
+    it("Should return same instances for one type of child", () => {
+      // * Arrange
+      const model1 = new TestQueryModel();
+      const model2 = new TestQueryModel();
+
+      // ? Assert
+      expect(model1).toBe(model2);
+    });
+  });
+
   describe("object parameter ordering", () => {
     it("should handle same object with different property order", async () => {
       // * Arrange
@@ -219,11 +237,10 @@ describe("ReactiveQueryModel", () => {
 
       // ! Act
       const result1 = await lastValueFrom(model.query(params1).pipe(take(2)));
-      const result2 = await lastValueFrom(model.query(params2).pipe(take(2)));
+      const result2 = await lastValueFrom(model.query(params2).pipe(take(1)));
 
       // ? Assert
-      expect(result1.data).toBe('Object param: {"name":"John","age":30}');
-      expect(result2.data).toBe('Object param: {"age":30,"name":"John"}');
+      expect(result1.data).toEqual(result2.data);
     });
 
     it("should handle nested objects with different property order", async () => {
@@ -306,10 +323,13 @@ describe("ReactiveQueryModel", () => {
       const result1 = await lastValueFrom(model.query(params).pipe(take(2)));
 
       // Manually set as staled
-      const hashedKey = model["getHashedKey"](params);
-      const currentStore = model["store"].getStore(hashedKey);
+      const hashedKey = (model as any).getHashedKey(params);
+      const currentStore = (model as any).store.getStore(hashedKey);
       if (currentStore) {
-        model["store"].setStore({ ...currentStore, staled: true }, hashedKey);
+        (model as any).store.setStore(
+          { ...currentStore, staled: true },
+          hashedKey,
+        );
       }
 
       const result2 = await lastValueFrom(model.query(params).pipe(take(2)));
@@ -342,7 +362,7 @@ describe("ReactiveQueryModel", () => {
     it("should retry on error based on config", async () => {
       // * Arrange
       const model = new ErrorThrowingQueryModel();
-      model["configs"].maxRetryCall = 2;
+      (model as any).configs.maxRetryCall = 2;
       const params = "test";
 
       // ! Act
@@ -456,13 +476,11 @@ describe("ReactiveQueryModel", () => {
       const params2 = { age: 30, name: "John" };
 
       // ! Act
-      const hash1 = model["getHashedKey"](params1);
-      const hash2 = model["getHashedKey"](params2);
+      const hash1 = (model as any).getHashedKey(params1);
+      const hash2 = (model as any).getHashedKey(params2);
 
       // ? Assert
-      expect(hash1).toBe('[{"name":"John","age":30}]');
-      expect(hash2).toBe('[{"age":30,"name":"John"}]');
-      expect(hash1).not.toBe(hash2);
+      expect(hash1).toEqual(hash2);
     });
   });
 
