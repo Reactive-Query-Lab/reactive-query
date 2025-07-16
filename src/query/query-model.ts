@@ -34,7 +34,7 @@ export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
 
   private DEFAULT_CACHE_TIME = 3 * 60 * 1000; // 3 minute
 
-  protected configs: {
+  protected get configs(): {
     maxRetryCall: number;
     cachTime: number;
     emptyVaultOnNewValue: boolean;
@@ -45,27 +45,29 @@ export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
           staleTime?: number;
         }
       | undefined;
-  } = {
-    /**
-     * Maximum time to call refresh method on getting left response
-     */
-    maxRetryCall: 1,
+  } {
+    return {
+      /**
+       * Maximum time to call refresh method on getting left response
+       */
+      maxRetryCall: 1,
 
-    /**
-     * Maximum amount of time before empty the store
-     */
-    cachTime: this.DEFAULT_CACHE_TIME,
+      /**
+       * Maximum amount of time before empty the store
+       */
+      cachTime: this.DEFAULT_CACHE_TIME,
 
-    /**
-     * Empty the vault when new data arrives
-     */
-    emptyVaultOnNewValue: false,
+      /**
+       * Empty the vault when new data arrives
+       */
+      emptyVaultOnNewValue: false,
 
-    /**
-     * Default store to init the vault with one default store
-     */
-    initStore: undefined,
-  };
+      /**
+       * Default store to init the vault with one default store
+       */
+      initStore: undefined,
+    };
+  }
 
   constructor() {
     this.store = createVault({
