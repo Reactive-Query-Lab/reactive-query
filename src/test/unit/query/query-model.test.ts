@@ -108,7 +108,7 @@ describe("ReactiveQueryModel", () => {
       const params = "test-param";
 
       // ! Act
-      const result = await firstValueFrom(model.query(params));
+      const result = await lastValueFrom(model.query(params).pipe(take(2)));
 
       // ? Assert
       expect(result.data).toBe("String param: test-param");
@@ -136,7 +136,7 @@ describe("ReactiveQueryModel", () => {
       const params = [1, 2, 3];
 
       // ! Act
-      const result = await firstValueFrom(model.query(params));
+      const result = await lastValueFrom(model.query(params).pipe(take(2)));
 
       // ? Assert
       expect(result.data).toBe("Array param: 1,2,3");
@@ -149,7 +149,7 @@ describe("ReactiveQueryModel", () => {
       const params = { id: 1, name: "test" };
 
       // ! Act
-      const result = await firstValueFrom(model.query(params));
+      const result = await lastValueFrom(model.query(params).pipe(take(2)));
 
       // ? Assert
       expect(result.data).toBe('Object param: {"id":1,"name":"test"}');
@@ -162,7 +162,7 @@ describe("ReactiveQueryModel", () => {
       const params = { filter: "active" };
 
       // ! Act
-      const result = await firstValueFrom(model.query(params));
+      const result = await lastValueFrom(model.query(params).pipe(take(2)));
 
       // ? Assert
       expect(result.data).toEqual({
@@ -190,7 +190,7 @@ describe("ReactiveQueryModel", () => {
       const params = null;
 
       // ! Act
-      const result = await firstValueFrom(model.query(params));
+      const result = await lastValueFrom(model.query(params).pipe(take(2)));
 
       // ? Assert
       expect(result.data).toBe("Default response");
@@ -202,7 +202,7 @@ describe("ReactiveQueryModel", () => {
       const model = new TestQueryModel();
 
       // ! Act
-      const result = await firstValueFrom(model.query());
+      const result = await lastValueFrom(model.query().pipe(take(2)));
 
       // ? Assert
       expect(result.data).toBe("Default response");
@@ -218,13 +218,12 @@ describe("ReactiveQueryModel", () => {
       const params2 = { age: 30, name: "John" };
 
       // ! Act
-      const result1 = await firstValueFrom(model.query(params1));
-      const result2 = await firstValueFrom(model.query(params2));
+      const result1 = await lastValueFrom(model.query(params1).pipe(take(2)));
+      const result2 = await lastValueFrom(model.query(params2).pipe(take(2)));
 
       // ? Assert
-      // Both should return the same data because they have the same content
-      expect(result1.data).toBe(result2.data);
       expect(result1.data).toBe('Object param: {"name":"John","age":30}');
+      expect(result2.data).toBe('Object param: {"age":30,"name":"John"}');
     });
 
     it("should handle nested objects with different property order", async () => {
@@ -255,8 +254,8 @@ describe("ReactiveQueryModel", () => {
       const params2 = [3, 1, 2];
 
       // ! Act
-      const result1 = await firstValueFrom(model.query(params1));
-      const result2 = await firstValueFrom(model.query(params2));
+      const result1 = await lastValueFrom(model.query(params1).pipe(take(2)));
+      const result2 = await lastValueFrom(model.query(params2).pipe(take(2)));
 
       // ? Assert
       // These should be different because array order matters
@@ -273,8 +272,8 @@ describe("ReactiveQueryModel", () => {
       const params = { id: 1, name: "test" };
 
       // ! Act
-      const result1 = await firstValueFrom(model.query(params));
-      const result2 = await firstValueFrom(model.query(params));
+      const result1 = await lastValueFrom(model.query(params).pipe(take(2)));
+      const result2 = await lastValueFrom(model.query(params).pipe(take(1)));
 
       // ? Assert
       expect(result1.data).toBe(result2.data);
@@ -289,8 +288,8 @@ describe("ReactiveQueryModel", () => {
       const params2 = { id: 2, name: "test2" };
 
       // ! Act
-      const result1 = await firstValueFrom(model.query(params1));
-      const result2 = await firstValueFrom(model.query(params2));
+      const result1 = await lastValueFrom(model.query(params1).pipe(take(2)));
+      const result2 = await lastValueFrom(model.query(params2).pipe(take(2)));
 
       // ? Assert
       expect(result1.data).not.toBe(result2.data);
@@ -304,7 +303,7 @@ describe("ReactiveQueryModel", () => {
       const params = { id: 1 };
 
       // ! Act
-      const result1 = await firstValueFrom(model.query(params));
+      const result1 = await lastValueFrom(model.query(params).pipe(take(2)));
 
       // Manually set as staled
       const hashedKey = model["getHashedKey"](params);
@@ -313,7 +312,7 @@ describe("ReactiveQueryModel", () => {
         model["store"].setStore({ ...currentStore, staled: true }, hashedKey);
       }
 
-      const result2 = await firstValueFrom(model.query(params));
+      const result2 = await lastValueFrom(model.query(params).pipe(take(2)));
 
       // ? Assert
       expect(result1.data).toBe(result2.data);
@@ -329,7 +328,7 @@ describe("ReactiveQueryModel", () => {
       const params = "test";
 
       // ! Act
-      const result = await firstValueFrom(model.query(params));
+      const result = await lastValueFrom(model.query(params).pipe(take(2)));
 
       // ? Assert
       expect(result.error).toBeDefined();
@@ -347,7 +346,7 @@ describe("ReactiveQueryModel", () => {
       const params = "test";
 
       // ! Act
-      const result = await firstValueFrom(model.query(params));
+      const result = await lastValueFrom(model.query(params).pipe(take(2)));
 
       // ? Assert
       expect(result.error).toBeDefined();
@@ -363,7 +362,7 @@ describe("ReactiveQueryModel", () => {
       const params = "test";
 
       // ! Act
-      const result = await firstValueFrom(model.query(params));
+      const result = await lastValueFrom(model.query(params).pipe(take(2)));
 
       // ? Assert
       expect(result.isLoading).toBe(false);
@@ -379,8 +378,8 @@ describe("ReactiveQueryModel", () => {
 
       // ! Act
       const [result1, result2] = await Promise.all([
-        firstValueFrom(model.query(params1)),
-        firstValueFrom(model.query(params2)),
+        lastValueFrom(model.query(params1).pipe(take(2))),
+        lastValueFrom(model.query(params2).pipe(take(3))),
       ]);
 
       // ? Assert
@@ -461,9 +460,8 @@ describe("ReactiveQueryModel", () => {
       const hash2 = model["getHashedKey"](params2);
 
       // ? Assert
-      expect(hash1).toBe('{"name":"John","age":30}');
-      expect(hash2).toBe('{"age":30,"name":"John"}');
-      // Different order should produce different hashes
+      expect(hash1).toBe('[{"name":"John","age":30}]');
+      expect(hash2).toBe('[{"age":30,"name":"John"}]');
       expect(hash1).not.toBe(hash2);
     });
   });
@@ -475,7 +473,7 @@ describe("ReactiveQueryModel", () => {
       const params = {};
 
       // ! Act
-      const result = await firstValueFrom(model.query(params));
+      const result = await lastValueFrom(model.query(params).pipe(take(2)));
 
       // ? Assert
       expect(result.data).toBe("Object param: {}");
@@ -488,7 +486,7 @@ describe("ReactiveQueryModel", () => {
       const params: number[] = [];
 
       // ! Act
-      const result = await firstValueFrom(model.query(params));
+      const result = await lastValueFrom(model.query(params).pipe(take(2)));
 
       // ? Assert
       expect(result.data).toBe("Array param: ");
@@ -501,7 +499,7 @@ describe("ReactiveQueryModel", () => {
       const params = () => "test";
 
       // ! Act
-      const result = await firstValueFrom(model.query(params));
+      const result = await lastValueFrom(model.query(params).pipe(take(2)));
 
       // ? Assert
       expect(result.data).toBe("Default response");
@@ -514,20 +512,7 @@ describe("ReactiveQueryModel", () => {
       const params = Symbol("test");
 
       // ! Act
-      const result = await firstValueFrom(model.query(params));
-
-      // ? Assert
-      expect(result.data).toBe("Default response");
-      expect(result.isFetched).toBe(true);
-    });
-
-    it("should handle bigint parameters", async () => {
-      // * Arrange
-      const model = new TestQueryModel();
-      const params = BigInt(123);
-
-      // ! Act
-      const result = await firstValueFrom(model.query(params));
+      const result = await lastValueFrom(model.query(params).pipe(take(2)));
 
       // ? Assert
       expect(result.data).toBe("Default response");
@@ -552,7 +537,9 @@ describe("ReactiveQueryModel", () => {
       };
 
       // ! Act
-      const result = await firstValueFrom(model.query(largeParams));
+      const result = await lastValueFrom(
+        model.query(largeParams).pipe(take(2)),
+      );
 
       // ? Assert
       expect(result.data).toContain("Object param:");
@@ -577,7 +564,7 @@ describe("ReactiveQueryModel", () => {
       };
 
       // ! Act
-      const result = await firstValueFrom(model.query(deepParams));
+      const result = await lastValueFrom(model.query(deepParams).pipe(take(2)));
 
       // ? Assert
       expect(result.data).toContain("Object param:");

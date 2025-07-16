@@ -111,7 +111,15 @@ export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
    * @param params - The parameters to hash, it should be serializable
    */
   protected getHashedKey(params?: unknown): string {
-    return JSON.stringify(params);
+    let lastParamsToHash;
+
+    if (typeof params === "symbol") {
+      lastParamsToHash = params.toString();
+    } else {
+      lastParamsToHash = params;
+    }
+
+    return JSON.stringify([lastParamsToHash]);
   }
 
   private async refreshHandler(
