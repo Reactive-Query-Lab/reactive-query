@@ -23,12 +23,14 @@ type ComplexData = {
   };
 };
 
+const mockedRefreshMethod = vi.fn();
 // Concrete implementation for testing
 class TestQueryModel extends ReactiveQueryModel<StringData> {
   protected store = createVault<StringData>();
 
   protected async refresh(params?: unknown): Promise<StringData> {
     // Simulate different responses based on params
+    mockedRefreshMethod();
     if (typeof params === "string") {
       return `String param: ${params}`;
     }
@@ -77,6 +79,9 @@ class ErrorThrowingQueryModel extends ReactiveQueryModel<StringData> {
 }
 
 describe("ReactiveQueryModel", () => {
+  beforeEach(() => {
+    mockedRefreshMethod.mockReset();
+  });
   describe("basic functionality", () => {
     it("should create a query model instance", () => {
       // * Arrange & Act
@@ -372,6 +377,88 @@ describe("ReactiveQueryModel", () => {
       expect(result.error).toBeDefined();
       expect(result.error).toBeInstanceOf(Error);
       expect((result.error as Error).message).toBe("Simulated error");
+    });
+  });
+
+  describe("configs", () => {
+    it("Should store correct stale time with specific params", async () => {
+      // * Arrange
+      const model = new TestQueryModel();
+      const params = "test";
+      const staleTime = 1000;
+
+      // ! Act
+      const result = await lastValueFrom(
+        model.query(params, { staleTime }).pipe(take(2)),
+      );
+
+      // ? Assert
+      expect(result.staleTime).toBe(staleTime);
+    });
+
+    it("Should store correct different stale for different params", async () => {
+      // * Arrange
+      const model = new TestQueryModel();
+      const params1 = "test1";
+      const params2 = "test2";
+      const staleTime1 = 1000;
+      const staleTime2 = 2000;
+
+      // ! Act
+      const result1 = await lastValueFrom(
+        model.query(params1, { staleTime: staleTime1 }).pipe(take(2)),
+      );
+      const result2 = await lastValueFrom(
+        model.query(params2, { staleTime: staleTime2 }).pipe(take(2)),
+      );
+
+      // ? Assert
+      expect(result1.staleTime).toBe(staleTime1);
+      expect(result2.staleTime).toBe(staleTime2);
+    });
+
+    it("Before passing the stale time, with getting data from cache, should is staled will be false", async () => {
+      // * Arrange
+      const currentTime = new Date();
+      vi.useFakeTimers();
+      vi.setSystemTime(currentTime);
+      const model = new TestQueryModel();
+      const params = "test";
+      const staleTime = 1000;
+
+      // ! Act
+      await lastValueFrom(model.query(params, { staleTime }).pipe(take(2)));
+      vi.setSystemTime(currentTime.getTime() + staleTime - 50);
+
+      // ! Act
+      const result2 = await lastValueFrom(model.query(params).pipe(take(1)));
+      // ? Assert
+      expect(result2.staled).toBe(false);
+      expect(result2.isFetching).toBe(false);
+      expect(mockedRefreshMethod).toHaveBeenCalledOnce();
+
+      vi.useRealTimers();
+    });
+
+    it("After passing the stale time, with getting data from cache, should call refresh method", async () => {
+      // * Arrange
+      const currentTime = new Date();
+      vi.useFakeTimers();
+      vi.setSystemTime(currentTime);
+      const model = new TestQueryModel();
+      const params = "test";
+      const staleTime = 1000;
+
+      // ! Act
+      await lastValueFrom(model.query(params, { staleTime }).pipe(take(2)));
+      vi.setSystemTime(currentTime.getTime() + staleTime * 1000);
+
+      // ! Act
+      await lastValueFrom(model.query(params).pipe(take(1)));
+      // ? Assert
+      expect(mockedRefreshMethod).toHaveBeenCalledTimes(2);
+
+      vi.useRealTimers();
     });
   });
 

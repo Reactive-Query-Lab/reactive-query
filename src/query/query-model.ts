@@ -88,7 +88,20 @@ export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
     };
   }
 
-  query(params?: unknown): Observable<QueryResponse<DATA>> {
+  query(
+    params?: unknown,
+    configs?: {
+      /**
+       * Stale time is the time to consider the data is fresh and no need to call
+       *  refresh method again.
+       * If a data will be staled, the data will be kept in the and return it but
+       *  at the same time refresh method will be called to get fresh data.
+       * in seconds
+       * by default it's undefined which means always data will be considred as fresh data.
+       */
+      staleTime?: number;
+    },
+  ): Observable<QueryResponse<DATA>> {
     return this.store$.pipe(
       rxMap((vault) => {
         const hashedKey = this.getHashedKey(params);
@@ -108,13 +121,24 @@ export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
 
         if (isFetchedAndStaled || !storeToResponse.isFetched) {
           if (isFetchedAndStaled) {
-            storeToResponse = { ...storeToResponse, isFetching: true };
+            storeToResponse = {
+              ...storeToResponse,
+              isFetching: true,
+              staleTime: configs?.staleTime,
+              staled: true,
+            };
             this.store.setStore(storeToResponse, hashedKey);
           }
 
           // call refresh
           this.refreshHandler(storeToResponse, params).then((newStore) => {
-            this.store.setStore(newStore, hashedKey);
+            this.store.setStore(
+              {
+                ...newStore,
+                staleTime: configs?.staleTime,
+              },
+              hashedKey,
+            );
           });
         }
         return storeToResponse;
