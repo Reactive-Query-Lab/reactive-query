@@ -30,9 +30,9 @@ export default function createVault<T, E = undefined, F = unknown>(
      */
     initCacheTime?: number;
     /**
-     * Replace the store with other stores in the vault when new data arrives
+     * Empty the vault when new data arrives
      */
-    replaceOnNewValue?: boolean;
+    emptyVaultOnNewValue?: boolean;
   },
   customEvents?: E,
 ): ReactiveQueryVault<T, E, F> {
@@ -75,8 +75,8 @@ export default function createVault<T, E = undefined, F = unknown>(
     store$: store$.asObservable(),
     invalidate: invalidate(store$),
     invalidateKey: invalidateKey(store$),
-    setData: setData(store$, init?.replaceOnNewValue),
-    setStore: setStore(store$, init?.replaceOnNewValue),
+    setData: setData(store$, init?.emptyVaultOnNewValue),
+    setStore: setStore(store$, init?.emptyVaultOnNewValue),
     setIsFetched: setIsFetched(store$),
     setIsFetching: setIsFetching(store$),
     setLastFetchedTime: setLastFetchedTime(store$),

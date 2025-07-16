@@ -37,7 +37,7 @@ export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
   protected configs: {
     maxRetryCall: number;
     cachTime: number;
-    replaceOnNewValue: boolean;
+    emptyVaultOnNewValue: boolean;
     initStore:
       | {
           key: string;
@@ -57,9 +57,9 @@ export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
     cachTime: this.DEFAULT_CACHE_TIME,
 
     /**
-     * Replace the store with other stores in the vault when new data arrives
+     * Empty the vault when new data arrives
      */
-    replaceOnNewValue: false,
+    emptyVaultOnNewValue: false,
 
     /**
      * Default store to init the vault with one default store
@@ -69,7 +69,7 @@ export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
 
   constructor() {
     this.store = createVault({
-      replaceOnNewValue: this.configs.replaceOnNewValue,
+      emptyVaultOnNewValue: this.configs.emptyVaultOnNewValue,
       initCacheTime: this.configs.cachTime,
       initalKey: this.configs.initStore?.key,
       initialValue: this.configs.initStore?.value,

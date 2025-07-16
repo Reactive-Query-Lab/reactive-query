@@ -59,7 +59,7 @@ describe("createVault", () => {
         const store = createVault({
           initalKey: "test",
           initialValue: { name: "test" },
-          replaceOnNewValue: true,
+          emptyVaultOnNewValue: true,
         });
 
         const newData = { name: "new" };

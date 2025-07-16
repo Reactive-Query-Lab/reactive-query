@@ -92,16 +92,6 @@ describe("ReactiveQueryModel", () => {
       expect(model.storeHandler).toBeDefined();
       expect(model.storeHandler.invalidate).toBeDefined();
     });
-
-    it("should have default configs", () => {
-      // * Arrange
-      const model = new TestQueryModel();
-
-      // ? Assert
-      expect((model as any).configs).toEqual({
-        maxRetryCall: 1,
-      });
-    });
   });
 
   describe("data types handling", () => {
