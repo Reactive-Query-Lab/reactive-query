@@ -1,4 +1,4 @@
-# Reactive Models
+# Reactive Query
 
 A lightweight, reactive state management library for modern JavaScript/TypeScript applications with built-in caching, retry mechanisms, and RxJS integration.
 
@@ -14,11 +14,11 @@ A lightweight, reactive state management library for modern JavaScript/TypeScrip
 ## Installation
 
 ```bash
-npm install reactive-models
+npm install reactive-query
 # or
-yarn add reactive-models
+yarn add reactive-query
 # or
-pnpm add reactive-models
+pnpm add reactive-query
 ```
 
 ## Quick Start
@@ -26,7 +26,7 @@ pnpm add reactive-models
 ### Basic Usage
 
 ```typescript
-import { ReactiveQueryModel, createVault } from 'reactive-models';
+import { ReactiveQueryModel, createVault } from 'reactive-query';
 
 // Define your data type
 type UserData = {
@@ -55,7 +55,7 @@ const userData$ = userModel.query(123); // Observable<UserData>
 ### Advanced Usage with Caching
 
 ```typescript
-import { ReactiveQueryModel, createVault } from 'reactive-models';
+import { ReactiveQueryModel, createVault } from 'reactive-query';
 
 class ProductQueryModel extends ReactiveQueryModel<Product[]> {
   protected store = createVault<Product[]>({
@@ -125,7 +125,7 @@ const vault = createVault<DataType>({
 Utility function for retrying async operations.
 
 ```typescript
-import { recursiveCallWithRetry } from 'reactive-models';
+import { recursiveCallWithRetry } from 'reactive-query';
 
 const result = await recursiveCallWithRetry(
   async () => {
@@ -172,7 +172,7 @@ type BaseReactiveStore<DataType> = {
 
 ```typescript
 import React, { useEffect, useState } from 'react';
-import { ReactiveQueryModel, createVault } from 'reactive-models';
+import { ReactiveQueryModel, createVault } from 'reactive-query';
 
 class TodoQueryModel extends ReactiveQueryModel<Todo[]> {
   protected store = createVault<Todo[]>();
@@ -221,7 +221,7 @@ function TodoList() {
 
 ```typescript
 import { ref, onMounted, onUnmounted } from 'vue';
-import { ReactiveQueryModel, createVault } from 'reactive-models';
+import { ReactiveQueryModel, createVault } from 'reactive-query';
 
 class UserQueryModel extends ReactiveQueryModel<User> {
   protected store = createVault<User>();

@@ -1,23 +1,23 @@
 {
-  "name": "reactive-models",
+  "name": "reactive-query",
   "private": false,
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "files": [
     "dist"
   ],
-  "main": "./dist/reactive-models.cjs.js",
-  "module": "./dist/reactive-models.esm.js",
-  "types": "./dist/reactive-models.d.ts",
+  "main": "./dist/reactive-query.cjs.js",
+  "module": "./dist/reactive-query.esm.js",
+  "types": "./dist/reactive-query.d.ts",
   "exports": {
-    "import": "./dist/reactive-models.esm.js",
-    "require": "./dist/reactive-models.cjs.js",
-    "types": "./dist/reactive-models.d.ts",
-    "default": "./dist/reactive-models.cjs.js"
+    "import": "./dist/reactive-query.esm.js",
+    "require": "./dist/reactive-query.cjs.js",
+    "types": "./dist/reactive-query.d.ts",
+    "default": "./dist/reactive-query.cjs.js"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/behnamrhp/reactive-models.git"
+    "url": "https://github.com/behnamrhp/reactive-query.git"
   },
   "author": {
     "name": "Behnam RHP",
@@ -55,6 +55,8 @@
     "vitest": "^3.1.4"
   },
   "dependencies": {
-    "rxjs": "^7.8.2"
+    "rxjs": "^7.8.2",
+    "vite-plugin-dts": "^4.5.4",
+    "vite-tsconfig-paths": "^5.1.4"
   }
 }

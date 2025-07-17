@@ -1,5 +1,7 @@
 import { defineConfig } from "vite";
 import path from "path";
+import tsConfigPaths from "vite-tsconfig-paths";
+import dts from "vite-plugin-dts";
 export default defineConfig({
     test: {
         globals: true,
@@ -11,7 +13,13 @@ export default defineConfig({
             reportsDirectory: "coverage",
         },
     },
-    plugins: [],
+    plugins: [
+        tsConfigPaths(),
+        dts({
+            insertTypesEntry: true,
+            include: ["src/"],
+        }),
+    ],
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "./src"),
@@ -20,9 +28,9 @@ export default defineConfig({
     build: {
         lib: {
             entry: path.resolve(__dirname, "src/index.ts"),
-            name: "ReactiveModels",
+            name: "ReactiveQuery",
             fileName: function (format) {
-                return "reactive-models.".concat(format === "es" ? "esm" : format, ".js");
+                return "reactive-query.".concat(format === "es" ? "esm" : format, ".js");
             },
             formats: ["es", "cjs"],
         },
