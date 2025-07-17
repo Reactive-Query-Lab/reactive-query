@@ -1,14 +1,20 @@
 {
   "name": "reactive-models",
   "private": false,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "files": [
     "dist"
   ],
-  "main": "dist/reactive-models.js",
-  "module": "dist/reactive-models.esm.js",
-  "types": "dist/reactive-models.d.ts",
+  "main": "./dist/reactive-models.cjs.js",
+  "module": "./dist/reactive-models.esm.js",
+  "types": "./dist/reactive-models.d.ts",
+  "exports": {
+    "import": "./dist/reactive-models.esm.js",
+    "require": "./dist/reactive-models.cjs.js",
+    "types": "./dist/reactive-models.d.ts",
+    "default": "./dist/reactive-models.cjs.js"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/behnamrhp/reactive-models.git"
@@ -27,6 +33,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:types": "tsc -p tsconfig.build.json --emitDeclarationOnly",
     "test": "vitest",
     "lint": "eslint .",
     "preview": "vite preview"

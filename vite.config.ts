@@ -24,8 +24,23 @@ export default defineConfig({
   },
   build: {
     lib: {
-      entry: "./src/index.ts",
-      name: "reactive-models",
+      entry: path.resolve(__dirname, "src/index.ts"),
+      name: "ReactiveModels",
+      fileName: (format) =>
+        `reactive-models.${format === "es" ? "esm" : format}.js`,
+      formats: ["es", "cjs"],
     },
+    rollupOptions: {
+      external: ["rxjs"],
+      output: {
+        globals: {
+          rxjs: "rxjs",
+        },
+        exports: "named",
+      },
+    },
+    sourcemap: true,
+    minify: false,
+    target: "es2020",
   },
 } as VitestConfigExport);

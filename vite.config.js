@@ -1,9 +1,17 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
 import path from "path";
-// https://vite.dev/config/
 export default defineConfig({
-    plugins: [react()],
+    test: {
+        globals: true,
+        setupFiles: "src/test/setup.ts",
+        root: "./",
+        coverage: {
+            provider: "v8",
+            reporter: ["lcov", "clover"],
+            reportsDirectory: "coverage",
+        },
+    },
+    plugins: [],
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "./src"),
@@ -11,8 +19,24 @@ export default defineConfig({
     },
     build: {
         lib: {
-            entry: "./src/index.ts",
-            name: "react-vvm",
+            entry: path.resolve(__dirname, "src/index.ts"),
+            name: "ReactiveModels",
+            fileName: function (format) {
+                return "reactive-models.".concat(format === "es" ? "esm" : format, ".js");
+            },
+            formats: ["es", "cjs"],
         },
+        rollupOptions: {
+            external: ["rxjs"],
+            output: {
+                globals: {
+                    rxjs: "rxjs",
+                },
+                exports: "named",
+            },
+        },
+        sourcemap: true,
+        minify: false,
+        target: "es2020",
     },
 });
