@@ -14,6 +14,8 @@ import {
   setStore,
   getStore,
   resetVault,
+  invalidateByKey,
+  resetStore,
 } from "@/store/query/store-methods";
 import { BehaviorSubject } from "rxjs";
 
@@ -75,8 +77,8 @@ export default function createVault<T, E = undefined, F = unknown>(
     store$: store$.asObservable(),
     invalidate: invalidate(store$),
     invalidateKey: invalidateKey(store$),
-    setData: setData(store$, init?.emptyVaultOnNewValue),
-    setStore: setStore(store$, init?.emptyVaultOnNewValue),
+    setData: setData(store$),
+    setStore: setStore(store$),
     setIsFetched: setIsFetched(store$),
     setIsFetching: setIsFetching(store$),
     setLastFetchedTime: setLastFetchedTime(store$),
@@ -84,6 +86,8 @@ export default function createVault<T, E = undefined, F = unknown>(
     setError: setError(store$),
     setIsLoading: setIsLoading(store$),
     getStore: getStore(store$),
+    invalidateByKey: invalidateByKey(store$),
+    resetStore: resetStore(store$),
     ...(customEvents || {}),
   } as ReactiveQueryVault<T, E, F>;
 }

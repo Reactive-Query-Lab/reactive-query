@@ -20,6 +20,18 @@ export function invalidate<T>(
   };
 }
 
+export function resetStore<T>(
+  store$: BehaviorSubject<{ [key: string]: BaseReactiveStore<T> }>,
+): (key: string) => void {
+  return (key: string) => {
+    const currentStore = store$.getValue();
+    if (!currentStore[key]) return;
+    const updatedStore = { ...currentStore };
+    delete updatedStore[key];
+    store$.next(updatedStore);
+  };
+}
+
 export function invalidateKey<T>(
   store$: BehaviorSubject<{ [key: string]: BaseReactiveStore<T> }>,
 ): (key: string) => void {
@@ -35,12 +47,11 @@ export function invalidateKey<T>(
 
 export function setData<T>(
   store$: BehaviorSubject<{ [key: string]: BaseReactiveStore<T> }>,
-  replace?: boolean,
 ): (data: T, key: string) => void {
   return (data: T, key: string) => {
     const currentStore = store$.getValue();
     const updatedStore = {
-      ...(replace ? {} : currentStore),
+      ...currentStore,
       [key]: { ...currentStore[key], data },
     };
     store$.next(updatedStore);
@@ -49,11 +60,10 @@ export function setData<T>(
 
 export function setStore<T>(
   store$: BehaviorSubject<{ [key: string]: BaseReactiveStore<T> }>,
-  replace?: boolean,
 ): (data: BaseReactiveStore<T>, key: string) => void {
   return (data: BaseReactiveStore<T>, key: string) => {
     const currentStore = store$.getValue();
-    const updatedStore = { ...(replace ? {} : currentStore), [key]: data };
+    const updatedStore = { ...currentStore, [key]: data };
     store$.next(updatedStore);
   };
 }
@@ -66,6 +76,20 @@ export function setIsFetched<T>(
     const updatedStore = {
       ...currentStore,
       [key]: { ...currentStore[key], isFetched },
+    };
+    store$.next(updatedStore);
+  };
+}
+
+export function invalidateByKey<T>(
+  store$: BehaviorSubject<{ [key: string]: BaseReactiveStore<T> }>,
+): (key: string) => void {
+  return (key: string) => {
+    const currentStore = store$.getValue();
+    if (!currentStore[key]) return;
+    const updatedStore = {
+      ...currentStore,
+      [key]: { ...currentStore[key], staled: true },
     };
     store$.next(updatedStore);
   };
@@ -112,7 +136,7 @@ export function setError<T>(
     const currentStore = store$.getValue();
     const updatedStore = {
       ...currentStore,
-      [key]: { ...currentStore[key], error: error },
+      [key]: { ...currentStore[key], error },
     };
     store$.next(updatedStore);
   };
@@ -134,7 +158,5 @@ export function setIsLoading<T>(
 export function getStore<T>(
   store$: BehaviorSubject<{ [key: string]: BaseReactiveStore<T> }>,
 ): (key: string) => BaseReactiveStore<T> | undefined {
-  return (key: string) => {
-    return store$.getValue()[key];
-  };
+  return (key: string) => store$.getValue()[key];
 }

@@ -26,12 +26,14 @@ export type QueryVaultEvents<DATA, FAILURE = unknown> = {
   setData(data: DATA, key: string): void;
   setStore(data: BaseReactiveStore<DATA>, key: string): void;
   getStore(key: string): BaseReactiveStore<DATA> | undefined;
+  resetStore(key: string): void;
   setLastFetchedTime(time: number, key: string): void;
   invalidateKey(key: string): void;
   /**
    * Set all keys as staled
    */
   invalidate(): void;
+  invalidateByKey(keys: string): void;
   /**
    * Remove all keys
    */

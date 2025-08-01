@@ -121,6 +121,14 @@ export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
   get storeHandler() {
     return {
       invalidate: this.store.invalidate,
+      invalidateByKey: (params?: unknown) => {
+        const hashedKey = this.getHashedKey(params);
+        this.store.invalidateByKey(hashedKey);
+      },
+      resetStore: (params?: unknown) => {
+        const hashedKey = this.getHashedKey(params);
+        this.store.resetStore(hashedKey);
+      },
     };
   }
 
