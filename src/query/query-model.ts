@@ -223,7 +223,16 @@ export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
     return result;
   }
 
-  private async refreshHandler(
+  /**
+   * This method is used to handle the refresh process,
+   * it will handle the error, retry and return the prepared data to update the store
+   *
+   * @see don't override this method, if you want to handle the refresh process,
+   * @param store - The store to update
+   * @param params - The parameters to refresh
+   * @returns The updated store
+   */
+  protected async refreshHandler(
     store: BaseReactiveStore<DATA>,
     params: unknown,
   ): Promise<BaseReactiveStore<DATA>> {
@@ -252,6 +261,12 @@ export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
     }
   }
 
+  /**
+   * This method is used to check if the result data is the same as the previous one
+   * @param prev - The previous store
+   * @param curr - The current store
+   * @returns If the base data is the same
+   */
   isSameBaseData(
     prev: Partial<Omit<QueryResponse<DATA>, "data">>,
     curr: Partial<Omit<QueryResponse<DATA>, "data">>,
