@@ -1,5 +1,7 @@
 import { defineConfig, InlineConfig, UserConfig } from "vite";
 import path from "path";
+import tsConfigPaths from "vite-tsconfig-paths";
+import dts from "vite-plugin-dts";
 
 interface VitestConfigExport extends UserConfig {
   test: InlineConfig;
@@ -16,7 +18,13 @@ export default defineConfig({
       reportsDirectory: "coverage",
     },
   },
-  plugins: [],
+  plugins: [
+    tsConfigPaths(),
+    dts({
+      insertTypesEntry: true,
+      include: ["src/"],
+    }),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -24,8 +32,23 @@ export default defineConfig({
   },
   build: {
     lib: {
-      entry: "./src/index.ts",
-      name: "reactive-models",
+      entry: path.resolve(__dirname, "src/index.ts"),
+      name: "ReactiveQuery",
+      fileName: (format) =>
+        `reactive-query.${format === "es" ? "esm" : format}.js`,
+      formats: ["es", "cjs"],
     },
+    rollupOptions: {
+      external: ["rxjs"],
+      output: {
+        globals: {
+          rxjs: "rxjs",
+        },
+        exports: "named",
+      },
+    },
+    sourcemap: true,
+    minify: false,
+    target: "es2020",
   },
 } as VitestConfigExport);

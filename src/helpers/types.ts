@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
 declare const _: unique symbol;
 
 export type constructor<T> = {
