@@ -1,15 +1,113 @@
 # Reactive Query
 
-A lightweight, reactive state management library for modern JavaScript/TypeScript applications with built-in caching, retry mechanisms, and RxJS integration.
+A framework-agnostic library for model part in MVVM architectural pattern, automating querying, storing, and managing data in frontend applications based on MVVM, CQS, and reactive programming paradigms.
+
+## Table of Contents
+
+- [Reactive Query](#reactive-query)
+  - [Table of Contents](#table-of-contents)
+  - [Description](#description)
+  - [Motivation](#motivation)
+    - [Bridge Between Push and Pull Strategies](#bridge-between-push-and-pull-strategies)
+    - [CQS Pattern Implementation](#cqs-pattern-implementation)
+    - [Reactive Programming with RxJS](#reactive-programming-with-rxjs)
+  - [Features](#features)
+  - [Installation](#installation)
+  - [Architecture Overview](#architecture-overview)
+  - [Query Models](#query-models)
+    - [Thinking with Query Models](#thinking-with-query-models)
+    - [Vault and Store](#vault-and-store)
+    - [Query and Refresh](#query-and-refresh)
+    - [Key Hashing and Parameters](#key-hashing-and-parameters)
+    - [Configuration](#configuration)
+    - [Query API Reference](#query-api-reference)
+      - [Exported Types](#exported-types)
+      - [Protected Methods (Can be overridden)](#protected-methods-can-be-overridden)
+      - [Public Methods](#public-methods)
+      - [Configuration Options](#configuration-options)
+  - [Command Models](#command-models)
+    - [Understanding Mutate](#understanding-mutate)
+    - [Store Architecture](#store-architecture)
+    - [Parameter Management](#parameter-management)
+    - [Store Extension](#store-extension)
+    - [Command API Reference](#command-api-reference)
+      - [Exported Types](#exported-types-1)
+      - [Protected Methods (Can be overridden)](#protected-methods-can-be-overridden-1)
+      - [Public Methods](#public-methods-1)
+  - [Adapters](#adapters)
+    - [React Integration](#react-integration)
+      - [Using the React Adapter (Recommended)](#using-the-react-adapter-recommended)
+  - [Contributing](#contributing)
+  - [License](#license)
+
+## Description
+
+Reactive Query is a framework-agnostic library designed specifically for the **Model** part in the **MVVM (Model-View-ViewModel)** architectural pattern. It automates the process of querying, storing, and managing data in frontend applications by implementing **CQS (Command Query Separation)** and **reactive programming** paradigms.
+
+The library provides a bridge between **push-based** and **pull-based** rendering strategies, enabling granular control over re-rendering in pull-based frameworks like React and Vue while maintaining the efficiency of push-based frameworks like Angular.
+
+## Motivation
+
+In modern frontend development, there's a significant gap in libraries that can effectively manage data and automate the processes of managing, caching, and invalidating data in frontend applications while fitting seamlessly into the MVVM architectural pattern. Most existing solutions either:
+
+- Don't follow MVVM principles
+- Lack proper CQS implementation
+- Don't provide granular control over re-rendering
+- Are framework-specific rather than framework-agnostic
+
+We created Reactive Query to address these challenges by providing a specialized library that handles all logic related to data manipulation in the Model part of MVVM.
+
+### Bridge Between Push and Pull Strategies
+
+Modern frontend frameworks use different rendering strategies:
+
+**Push-based (Angular):** The framework automatically detects changes and re-renders components when data changes.
+
+**Pull-based (React/Vue):** Components must explicitly request re-renders when their state changes.
+
+Reactive Query bridges this gap by providing reactive observables that can be easily connected to pull-based frameworks. For example, in React, you can pipe and map changes to specific object keys, triggering `setState` only when relevant data changes:
+
+```typescript
+// Instead of re-rendering on any data change
+userModel.query().subscribe(setUserData);
+
+// You can be granular and only re-render when specific fields change
+userModel.query().pipe(
+  map(response => response.data?.name),
+  distinctUntilChanged()
+).subscribe(setUserName);
+```
+
+### CQS Pattern Implementation
+
+We implemented the **Command Query Separation (CQS)** pattern to handle different types of data operations:
+
+- **Queries**: Read operations that don't modify state
+- **Commands**: Write operations that modify state
+
+This separation allows for better performance, caching strategies, and state management. For more information about CQS, see [Command Query Separation](https://martinfowler.com/bliki/CommandQuerySeparation.html).
+
+### Reactive Programming with RxJS
+
+To provide subscribing capabilities and maintain framework agnosticism, we use the reactive programming paradigm with RxJS. This enables:
+
+- Automatic subscription management
+- Powerful data transformation operators
+- Framework-independent state management
+- Efficient change detection and propagation
 
 ## Features
 
-- 🚀 **Reactive State Management** - Built on RxJS for real-time state updates
+- 🏗️ **MVVM Architecture** - Designed specifically for the Model part of MVVM
+- 🔄 **CQS Pattern** - Clear separation between Commands and Queries
+- ⚡ **Reactive Programming** - Built on RxJS for real-time state updates
 - 💾 **Smart Caching** - Automatic caching with configurable stale times
 - 🔄 **Retry Mechanism** - Built-in retry logic for failed operations
 - 🎯 **TypeScript Support** - Full TypeScript support with type safety
 - 📦 **Lightweight** - Minimal bundle size with zero dependencies (except RxJS)
-- 🔧 **Flexible** - Easy to integrate with any framework
+- 🔧 **Framework Agnostic** - Works with any frontend framework
+- 🎛️ **Granular Control** - Fine-grained control over re-rendering
+- 🔌 **Extensible** - Easy to extend with custom stores and events
 
 ## Installation
 
@@ -21,163 +119,360 @@ yarn add reactive-query
 pnpm add reactive-query
 ```
 
-## Quick Start
+## Architecture Overview
 
-### Basic Usage
+Reactive Query follows a clear architectural pattern:
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Query Models  │    │  Command Models │    │     Stores      │
+│                 │    │                 │    │                 │
+│ • ReactiveQuery │    │ • ReactiveCmd   │    │ • Query Vault   │
+│ • Caching       │    │ • Mutations     │    │ • Command Store │
+│ • Parameters    │    │ • Parameters    │    │ • Events        │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+                    ┌─────────────────┐
+                    │   RxJS Streams  │
+                    │                 │
+                    │ • Observables   │
+                    │ • Subscriptions │
+                    │ • Operators     │
+                    └─────────────────┘
+```
+
+## Query Models
+
+Query Models handle read operations and implement intelligent caching strategies.
+
+### Thinking with Query Models
+
+Query Models are designed around the concept of **parameterized queries** that return cached results. Think of them as smart data fetchers that:
+
+1. **Cache by parameters** - Different parameters create different cache entries
+2. **Auto-refresh stale data** - Automatically fetch fresh data when cache expires
+3. **Handle loading states** - Provide loading, error, and success states
+4. **Retry on failure** - Automatically retry failed requests
+
+### Vault and Store
+
+**Vault**: A collection of stores indexed by hashed parameters. Think of it as a cache container.
+
+**Store**: Individual cache entries containing data, loading states, and metadata.
 
 ```typescript
-import { ReactiveQueryModel, createVault } from 'reactive-query';
+// Vault structure
+{
+  "user_123": { data: User, isLoading: false, isFetched: true, ... },
+  "user_456": { data: User, isLoading: true, isFetched: false, ... },
+  "products_filters": { data: Product[], isLoading: false, isFetched: true, ... }
+}
+```
 
-// Define your data type
-type UserData = {
-  id: number;
-  name: string;
-  email: string;
+### Query and Refresh
+
+**Query**: The public method that returns an observable of query results.
+
+**Refresh**: The protected method you implement to fetch data from your API.
+
+```typescript
+class UserQueryModel extends ReactiveQueryModel<User> {
+  protected async refresh(userId: number): Promise<User> {
+    const response = await fetch(`/api/users/${userId}`);
+    if (!response.ok) throw new Error('Failed to fetch user');
+    return response.json();
+  }
+}
+
+// Usage
+const userModel = new UserQueryModel();
+const user$ = userModel.query(123); // Observable<User>
+```
+
+### Key Hashing and Parameters
+
+Parameters are automatically hashed to create cache keys. The library provides intelligent hashing that:
+
+- Handles primitive values (strings, numbers, booleans)
+- Sorts object keys for consistent hashing
+- Handles arrays and nested objects
+- Supports custom hashing algorithms
+
+```typescript
+// These all create the same hash key
+userModel.query({ id: 123, include: 'profile' });
+userModel.query({ include: 'profile', id: 123 });
+
+// Different parameters create different cache entries
+userModel.query(123);        // Key: "123"
+userModel.query(456);        // Key: "456"
+userModel.query({ id: 123 }); // Key: '{"id":123}'
+```
+
+### Configuration
+
+Query Models support various configuration options:
+
+```typescript
+class UserQueryModel extends ReactiveQueryModel<User> {
+  protected get configs() {
+    return {
+      maxRetryCall: 3,           // Retry failed requests 3 times
+      cachTime: 5 * 60 * 1000,   // Cache for 5 minutes
+      emptyVaultOnNewValue: false, // Keep old cache when new data arrives
+      initStore: {
+        key: 'default',
+        value: { id: 0, name: 'Loading...' },
+        staleTime: 60 * 1000
+      }
+    };
+  }
+}
+```
+
+### Query API Reference
+
+#### Exported Types
+
+```typescript
+// Main response type for queries
+type QueryResponse<DATA> = {
+  data?: DATA;
+  isLoading: boolean;
+  isFetching: boolean;
+  isFetched: boolean;
+  error?: unknown;
+  staled: boolean;
+  staleTime?: number;
+  lastFetchedTime?: number;
 };
 
-// Create a query model
-class UserQueryModel extends ReactiveQueryModel<UserData> {
-  protected store = createVault<UserData>();
-  protected store$ = this.store.store$;
+// Base store type
+type BaseReactiveStore<DATA> = {
+  data: DATA;
+  isLoading: boolean;
+  isFetching: boolean;
+  isFetched: boolean;
+  error?: unknown;
+  staled: boolean;
+  staleTime?: number;
+  lastFetchedTime?: number;
+};
 
-  protected async refresh(params?: unknown): Promise<UserData> {
-    // Your API call logic here
-    const response = await fetch(`/api/users/${params}`);
-    return response.json();
-  }
-}
-
-// Use the model
-const userModel = new UserQueryModel();
-const userData$ = userModel.query(123); // Observable<UserData>
+// Vault type for multiple stores
+type ReactiveQueryVault<DATA, EVENTS = undefined> = {
+  store$: Observable<{ [key: string]: BaseReactiveStore<DATA> }>;
+} & QueryVaultEvents<DATA> & EVENTS;
 ```
 
-### Advanced Usage with Caching
+#### Protected Methods (Can be overridden)
 
 ```typescript
-import { ReactiveQueryModel, createVault } from 'reactive-query';
+// Override to implement your data fetching logic
+protected abstract refresh(params?: unknown): Promise<DATA>;
 
-class ProductQueryModel extends ReactiveQueryModel<Product[]> {
-  protected store = createVault<Product[]>({
-    initialValue: [],
-    initalKey: 'products',
-    initStaleTime: 5 * 60 * 1000, // 5 minutes
-  });
-  protected store$ = this.store.store$;
+// Override for custom parameter hashing
+protected getHashedKey(params?: unknown): string;
 
-  protected configs = {
-    maxRetryCall: 3, // Retry failed requests up to 3 times
+// Override for custom configuration
+protected get configs(): {
+  maxRetryCall: number;
+  cachTime: number;
+  emptyVaultOnNewValue: boolean;
+  initStore?: {
+    key: string;
+    value: DATA;
+    staleTime?: number;
   };
+};
+```
 
-  protected async refresh(params?: ProductFilters): Promise<Product[]> {
-    const queryString = new URLSearchParams(params).toString();
-    const response = await fetch(`/api/products?${queryString}`);
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch products');
-    }
-    
+#### Public Methods
+
+```typescript
+// Main query method
+query(params?: unknown, configs?: { staleTime?: number }): Observable<QueryResponse<DATA>>
+
+// Store management
+get storeHandler(): {
+  invalidate(): void;
+  invalidateByKey(params?: unknown): void;
+  resetStore(params?: unknown): void;
+}
+
+// Utility methods
+isSameBaseData(prev: QueryResponse<DATA>, curr: QueryResponse<DATA>): boolean;
+```
+
+#### Configuration Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `maxRetryCall` | `number` | `1` | Maximum retry attempts for failed requests |
+| `cachTime` | `number` | `3 * 60 * 1000` | Default cache time in milliseconds |
+| `emptyVaultOnNewValue` | `boolean` | `false` | Clear vault when new data arrives |
+| `initStore` | `object` | `undefined` | Initial store configuration |
+
+## Command Models
+
+Command Models handle write operations (create, update, delete) and manage parameter state.
+
+### Understanding Mutate
+
+The `mutate` method is the core of Command Models. It handles write operations and manages the command lifecycle:
+
+```typescript
+class CreateUserCommandModel extends ReactiveCommandModel<CreateUserParams, User> {
+  async mutate(params: CreateUserParams): Promise<User> {
+    const response = await fetch('/api/users', {
+      method: 'POST',
+      body: JSON.stringify(params)
+    });
     return response.json();
   }
 }
 ```
 
-## API Reference
+### Store Architecture
 
-### ReactiveQueryModel
+Unlike Query Models, Command Models use a single store instead of a vault because:
 
-The main class for creating reactive query models.
+- **No parameter-based caching** - Commands don't need to cache by parameters
+- **Single state management** - One set of parameters per command
+- **Immediate execution** - Commands execute immediately, not on demand
 
-#### Constructor
 ```typescript
-class MyQueryModel extends ReactiveQueryModel<DataType> {
-  // Implementation
+// Command store structure
+{
+  isLoading: boolean;
+  params: Partial<PARAMS>;
+  // ... extended store properties
 }
 ```
 
-#### Methods
+### Parameter Management
 
-##### `query(params?: unknown): Observable<QueryResponse<DataType>>`
-Executes a query with optional parameters and returns an observable of the result.
-
-##### `storeHandler.invalidate()`
-Invalidates all cached data, forcing fresh fetches on next queries.
-
-#### Properties
-
-##### `configs.maxRetryCall: number`
-Number of retry attempts for failed operations (default: 1).
-
-### createVault
-
-Factory function to create a reactive store vault.
+Command Models provide built-in parameter management:
 
 ```typescript
-const vault = createVault<DataType>({
-  initialValue?: DataType;
-  initalKey?: string;
-  initStaleTime?: number;
+// Get current parameters
+const params = commandModel.getParams();
+
+// Update parameters
+commandModel.updateModificationStore({ name: 'John', email: 'john@example.com' });
+
+// Get specific parameter
+const name = commandModel.getModificationValueByKey('name');
+
+// Subscribe to parameter changes
+commandModel.subscribeToParam().subscribe(({ params, isLoading }) => {
+  console.log('Parameters changed:', params);
 });
 ```
 
-### recursiveCallWithRetry
+### Store Extension
 
-Utility function for retrying async operations.
+Command Models support extended stores and custom events:
 
 ```typescript
-import { recursiveCallWithRetry } from 'reactive-query';
-
-const result = await recursiveCallWithRetry(
-  async () => {
-    // Your async operation
-    return await someAsyncOperation();
-  },
-  3 // max retries
-);
+class ExtendedCommandModel extends ReactiveCommandModel<
+  UserParams,
+  User,
+  { validationErrors: string[] },
+  { onValidationError: (errors: string[]) => void }
+> {
+  protected initExtendedStore() {
+    return {
+      initExtendedStore: { validationErrors: [] },
+      extendedEvents: (store$) => ({
+        onValidationError: (errors: string[]) => {
+          store$.next({
+            ...store$.value,
+            validationErrors: errors
+          });
+        }
+      })
+    };
+  }
+}
 ```
 
-## Types
+### Command API Reference
 
-### QueryResponse<DataType>
+#### Exported Types
+
 ```typescript
-type QueryResponse<DataType> = {
-  data?: DataType;
+// Command response type
+type CommandModelSubscribeResponse<PARAMS> = {
+  params: Partial<PARAMS>;
   isLoading: boolean;
-  isFetching: boolean;
-  isFetched: boolean;
-  error?: unknown;
-  staled: boolean;
-  staleTime?: number;
-  lastFetchedTime?: number;
+};
+
+// Base command store
+type BaseReactiveCommandStore<PARAMS, EXTENDED_STORE> = {
+  isLoading: boolean;
+  params: Partial<PARAMS>;
+} & EXTENDED_STORE;
+
+// Command store with events
+type ReactiveCommandStore<PARAMS, EXTENDED_STORE, EXTENDED_EVENTS> = {
+  store$: BehaviorSubject<BaseReactiveCommandStore<PARAMS, EXTENDED_STORE>>;
+} & BaseReactiveCommandEvents<PARAMS, EXTENDED_STORE> & EXTENDED_EVENTS;
+```
+
+#### Protected Methods (Can be overridden)
+
+```typescript
+// Override to implement your mutation logic
+abstract mutate(...args: any[]): Promise<RESPONSE>;
+
+// Override for initial parameters
+getInitialParams(): PARAMS;
+
+// Override for extended store and events
+protected initExtendedStore(): {
+  initExtendedStore?: EXTENDED_STORE;
+  extendedEvents?: (store$: BehaviorSubject<BaseReactiveCommandStore<PARAMS, EXTENDED_STORE>>) => EXTENDED_EVENTS;
 };
 ```
 
-### BaseReactiveStore<DataType>
+#### Public Methods
+
 ```typescript
-type BaseReactiveStore<DataType> = {
-  data: DataType;
-  isLoading: boolean;
-  isFetching: boolean;
-  isFetched: boolean;
-  error?: unknown;
-  staled: boolean;
-  staleTime?: number;
-  lastFetchedTime?: number;
-};
+// Subscribe to store changes
+subscribeToParam(): Observable<CommandModelSubscribeResponse<PARAMS>>;
+
+// Parameter management
+getModificationValueByKey<T extends keyof PARAMS>(key: T): PARAMS[T] | undefined;
+updateModificationStore(params: Partial<PARAMS>): void;
+getParams(): PARAMS;
+getStore(): BaseReactiveCommandStore<PARAMS, EXTENDED_STORE>;
+
+// State management
+updateIsLoading(isLoading: boolean): void;
+resetStore(): void;
 ```
 
-## Examples
+## Adapters
 
 ### React Integration
 
-```typescript
-import React, { useEffect, useState } from 'react';
-import { ReactiveQueryModel, createVault } from 'reactive-query';
+For seamless React integration, we provide a dedicated React adapter library: `reactive-query/react`
+
+#### Using the React Adapter (Recommended)
+
+```bash
+npm install reactive-query/react
+```
+
+```tsx
+import React, { useRef } from 'react';
+import { useRXQuery } from 'reactive-query/react';
+import { ReactiveQueryModel } from 'reactive-query';
 
 class TodoQueryModel extends ReactiveQueryModel<Todo[]> {
-  protected store = createVault<Todo[]>();
-  protected store$ = this.store.store$;
-
   protected async refresh(): Promise<Todo[]> {
     const response = await fetch('/api/todos');
     return response.json();
@@ -185,77 +480,25 @@ class TodoQueryModel extends ReactiveQueryModel<Todo[]> {
 }
 
 function TodoList() {
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [loading, setLoading] = useState(false);
-  
-  useEffect(() => {
-    const todoModel = new TodoQueryModel();
-    const subscription = todoModel.query().subscribe({
-      next: (response) => {
-        setTodos(response.data || []);
-        setLoading(response.isLoading);
-      },
-      error: (error) => {
-        console.error('Failed to fetch todos:', error);
-      }
-    });
+  const todoModel = useRef(new TodoQueryModel()).current;
+  const queryData = useRXQuery(todoModel.query);
 
-    return () => subscription.unsubscribe();
-  }, []);
+  if (queryData.loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (queryData.error) {
+    return <p>Error: {queryData.error.message}</p>;
+  }
 
   return (
-    <div>
-      {loading ? <p>Loading...</p> : (
-        <ul>
-          {todos.map(todo => (
-            <li key={todo.id}>{todo.title}</li>
-          ))}
-        </ul>
-      )}
-    </div>
+    <ul>
+      {queryData.data?.map(todo => (
+        <li key={todo.id}>{todo.title}</li>
+      ))}
+    </ul>
   );
 }
-```
-
-### Vue Integration
-
-```typescript
-import { ref, onMounted, onUnmounted } from 'vue';
-import { ReactiveQueryModel, createVault } from 'reactive-query';
-
-class UserQueryModel extends ReactiveQueryModel<User> {
-  protected store = createVault<User>();
-  protected store$ = this.store.store$;
-
-  protected async refresh(userId: number): Promise<User> {
-    const response = await fetch(`/api/users/${userId}`);
-    return response.json();
-  }
-}
-
-export default {
-  setup() {
-    const user = ref<User | null>(null);
-    const loading = ref(false);
-    let subscription: Subscription;
-
-    onMounted(() => {
-      const userModel = new UserQueryModel();
-      subscription = userModel.query(123).subscribe({
-        next: (response) => {
-          user.value = response.data || null;
-          loading.value = response.isLoading;
-        }
-      });
-    });
-
-    onUnmounted(() => {
-      subscription?.unsubscribe();
-    });
-
-    return { user, loading };
-  }
-};
 ```
 
 ## Contributing
