@@ -23,6 +23,7 @@ export type {
   ReactiveCommandStore,
   ExtendedEvents,
   ObservableStore,
+  BaseReactiveCommandEvents,
 } from "./store/command/store-type";
 export { default as createCommandStore } from "./store/command/store";
 

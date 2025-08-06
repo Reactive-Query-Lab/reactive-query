@@ -1,16 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BehaviorSubject, Observable } from "rxjs";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-export type BaseReactiveCommandStoreEmit<DATA> = (
-  partial:
-    | BaseReactiveCommandStore<DATA>
-    | Partial<BaseReactiveCommandStore<DATA>>
-    | ((
-        state: BaseReactiveCommandStore<DATA>,
-      ) => BaseReactiveCommandStore<DATA>),
-  replace?: boolean | undefined,
-) => void;
-
+/**
+ * Base store with extended store without any events
+ */
 export type BaseReactiveCommandStore<
   DATA,
   EXTENDED_STORE extends Record<string, unknown> | undefined = undefined,
@@ -19,6 +12,9 @@ export type BaseReactiveCommandStore<
   params: Partial<DATA>;
 } & (EXTENDED_STORE extends undefined ? Record<string, never> : EXTENDED_STORE);
 
+/**
+ * Base events with extended store
+ */
 export type BaseReactiveCommandEvents<
   DATA,
   EXTENDED_STORE extends Record<string, unknown> | undefined = undefined,
@@ -35,6 +31,9 @@ export type ExtendedEvents = Record<
   (...args: any[]) => void | undefined
 >;
 
+/**
+ * Observable version of store with extended store
+ */
 export type ObservableStore<
   DATA,
   EXTENDED_STORE extends Record<string, unknown> | undefined = undefined,
@@ -44,6 +43,9 @@ export type ObservableStore<
     : BaseReactiveCommandStore<DATA> & EXTENDED_STORE
 >;
 
+/**
+ * Whole store with extended events and extended store
+ */
 export type ReactiveCommandStore<
   DATA,
   EXTENDED_STORE extends Record<string, unknown> | undefined = undefined,
