@@ -37,6 +37,7 @@ A framework-agnostic library for model part in MVVM architectural pattern, autom
   - [Adapters](#adapters)
     - [React Integration](#react-integration)
       - [Using the React Adapter (Recommended)](#using-the-react-adapter-recommended)
+    - [Svelte](#svelte)
   - [Contributing](#contributing)
   - [License](#license)
 
@@ -111,11 +112,11 @@ To provide subscribing capabilities and maintain framework agnosticism, we use t
 ## Installation
 
 ```bash
-npm install reactive-query
+npm install reactive-query rxjs
 # or
-yarn add reactive-query
+yarn add reactive-query rxjs
 # or
-pnpm add reactive-query
+pnpm add reactive-query rxjs
 ```
 
 ## Architecture Overview
@@ -499,6 +500,9 @@ function TodoList() {
   );
 }
 ```
+
+### Svelte
+For now we don't have any adapter for Svelte but to see an example of how to use it with Svelte You can check this [gist](https://gist.github.com/behnamrhp/4058a739a551548ec1baddbe8a4ebe87)
 
 ## Contributing
 
