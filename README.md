@@ -1,6 +1,6 @@
 # Reactive Query
 
-A framework-agnostic library for model part in MVVM architectural pattern, automating querying, storing, and managing data in frontend applications based on MVVM, CQS, and reactive programming paradigms.
+A framework-agnostic library for model part in MVVM architectural pattern, automating querying, storing, and caching data in frontend applications based on MVVM or any MV*, CQS, and reactive programming paradigms.
 
 ## Table of Contents
 
@@ -42,7 +42,7 @@ A framework-agnostic library for model part in MVVM architectural pattern, autom
 
 ## Description
 
-Reactive Query is a framework-agnostic library designed specifically for the **Model** part in the **MVVM (Model-View-ViewModel)** architectural pattern. It automates the process of querying, storing, and managing data in frontend applications by implementing **CQS (Command Query Separation)** and **reactive programming** paradigms.
+Reactive Query is a framework-agnostic library designed specifically for the **Model** part in the **MVVM (Model-View-ViewModel)** or any MV* architectural pattern. It automates the process of querying, storing, and managing data in frontend applications by implementing **CQS (Command Query Separation)** and **reactive programming** paradigms.
 
 The library provides a bridge between **push-based** and **pull-based** rendering strategies, enabling granular control over re-rendering in pull-based frameworks like React and Vue while maintaining the efficiency of push-based frameworks like Angular.
 
@@ -50,12 +50,12 @@ The library provides a bridge between **push-based** and **pull-based** renderin
 
 In modern frontend development, there's a significant gap in libraries that can effectively manage data and automate the processes of managing, caching, and invalidating data in frontend applications while fitting seamlessly into the MVVM architectural pattern. Most existing solutions either:
 
-- Don't follow MVVM principles
-- Lack proper CQS implementation
+- Don't follow any software architectural patterns principles
+- Lack proper single responsibility 
 - Don't provide granular control over re-rendering
-- Are framework-specific rather than framework-agnostic
+- Are framework-specific rather than framework-independent
 
-We created Reactive Query to address these challenges by providing a specialized library that handles all logic related to data manipulation in the Model part of MVVM.
+We created Reactive Query to address these challenges by providing a specialized library that handles all logic related to data manipulation in the Model part of MVVM or any MV*.
 
 ### Bridge Between Push and Pull Strategies
 
@@ -73,17 +73,16 @@ userModel.query().subscribe(setUserData);
 
 // You can be granular and only re-render when specific fields change
 userModel.query().pipe(
-  map(response => response.data?.name),
-  distinctUntilChanged()
-).subscribe(setUserName);
+  distinctUntilChanged((prev, next) => prev.places.length === next.places.length)
+).subscribe(setPlaces);
 ```
 
 ### CQS Pattern Implementation
 
 We implemented the **Command Query Separation (CQS)** pattern to handle different types of data operations:
 
-- **Queries**: Read operations that don't modify state
-- **Commands**: Write operations that modify state
+- **Queries**: Read operations that don't modify state of the software and just need to be cached and refresh the data in some scenarios.
+- **Commands**: Write operations that modify software state
 
 This separation allows for better performance, caching strategies, and state management. For more information about CQS, see [Command Query Separation](https://martinfowler.com/bliki/CommandQuerySeparation.html).
 
@@ -196,7 +195,7 @@ const user$ = userModel.query(123); // Observable<User>
 Parameters are automatically hashed to create cache keys. The library provides intelligent hashing that:
 
 - Handles primitive values (strings, numbers, booleans)
-- Sorts object keys for consistent hashing
+- Sorts object keys for consistent hashing (Just one layer to avoid heavy time complexity. You can overwrite hashing logics for custom algorithms)
 - Handles arrays and nested objects
 - Supports custom hashing algorithms
 
@@ -459,17 +458,17 @@ resetStore(): void;
 
 ### React Integration
 
-For seamless React integration, we provide a dedicated React adapter library: `reactive-query/react`
+For seamless React integration, we provide a dedicated React adapter library: `reactive-query-react`
 
 #### Using the React Adapter (Recommended)
 
 ```bash
-npm install reactive-query/react
+npm install reactive-query-react
 ```
 
 ```tsx
 import React, { useRef } from 'react';
-import { useRXQuery } from 'reactive-query/react';
+import { useRXQuery } from 'reactive-query-react';
 import { ReactiveQueryModel } from 'reactive-query';
 
 class TodoQueryModel extends ReactiveQueryModel<Todo[]> {
