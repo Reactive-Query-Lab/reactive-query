@@ -458,7 +458,7 @@ resetStore(): void;
 
 ### React Integration
 
-For seamless React integration, we provide a dedicated React adapter library: `reactive-query-react`
+For seamless React integration, we provide a dedicated React adapter library: [reactive-query-react](https://github.com/behnamrhp/reactive-query-react)
 
 #### Using the React Adapter (Recommended)
 
