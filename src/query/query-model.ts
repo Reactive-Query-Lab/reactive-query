@@ -125,10 +125,11 @@ export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
         const hashedKey = this.getHashedKey(params);
         this.store.invalidateByKey(hashedKey);
       },
-      resetStore: (params?: unknown) => {
+      resetStore: (params: unknown) => {
         const hashedKey = this.getHashedKey(params);
         this.store.resetStore(hashedKey);
       },
+      resetVault: this.store.resetVault,
     };
   }
 

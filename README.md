@@ -300,6 +300,7 @@ get storeHandler(): {
   invalidate(): void;
   invalidateByKey(params?: unknown): void;
   resetStore(params?: unknown): void;
+  resetVault(): void
 }
 
 // Utility methods
