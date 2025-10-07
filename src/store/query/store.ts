@@ -28,9 +28,10 @@ export default function createVault<T, E = undefined, F = unknown>(
      */
     initStaleTime?: number;
     /**
+     * Time the store will be invalidated in. If null provided, the store will not be invalidated ever.
      * In miliseconds
      */
-    initCacheTime?: number;
+    initCacheTime?: number | null;
     /**
      * Empty the vault when new data arrives
      */
@@ -63,21 +64,23 @@ export default function createVault<T, E = undefined, F = unknown>(
   const DEFAULT_CACHE_TIME = 3 * 60 * 1000; // 3 minute
   // handle cache time
   const cacheTime = init?.initCacheTime || DEFAULT_CACHE_TIME;
-  setInterval(() => {
-    store$.next({
-      ...(init?.initalKey && init?.initialValue
-        ? {
-            [init.initalKey]: getInitStore(init.initialValue),
-          }
-        : {}),
-    });
-  }, cacheTime);
+  if (init?.initCacheTime !== null) {
+    setInterval(() => {
+      store$.next({
+        ...(init?.initalKey && init?.initialValue
+          ? {
+              [init.initalKey]: getInitStore(init.initialValue),
+            }
+          : {}),
+      });
+    }, cacheTime);
+  }
 
   return {
     store$: store$.asObservable(),
     invalidate: invalidate(store$),
     invalidateKey: invalidateKey(store$),
-    setData: setData(store$),
+    setData: setData(store$, init?.emptyVaultOnNewValue),
     setStore: setStore(store$),
     setIsFetched: setIsFetched(store$),
     setIsFetching: setIsFetching(store$),

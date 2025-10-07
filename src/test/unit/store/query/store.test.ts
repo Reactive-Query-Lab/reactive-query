@@ -71,6 +71,7 @@ describe("createVault", () => {
             [key: string]: BaseReactiveStore<Data>;
           }>,
         );
+        console.log(store.store$);
         // ? Assert
         expect(data).toEqual({
           [newKey]: {
@@ -114,6 +115,42 @@ describe("createVault", () => {
             staled: false,
             error: undefined,
             lastFetchedTime: new Date().getTime(),
+            staleTime: undefined,
+            isFetched: true,
+            isFetching: false,
+          },
+        });
+        vi.useRealTimers();
+      });
+
+      it("Should not invalidate the store if the cache time is null", async () => {
+        // * Arrange
+        const fakeCurrentDate = new Date();
+        vi.useFakeTimers();
+        vi.setSystemTime(fakeCurrentDate);
+        const store = createVault({
+          initalKey: "test",
+          initialValue: { name: "test" },
+          initCacheTime: null,
+        });
+        await firstValueFrom(
+          store.store$ as Observable<{
+            [key: string]: BaseReactiveStore<Data>;
+          }>,
+        );
+        vi.advanceTimersToNextTimer();
+        const data = await lastValueFrom(
+          store.store$.pipe(take(1)) as Observable<{
+            [key: string]: BaseReactiveStore<Data>;
+          }>,
+        );
+        expect(data).toEqual({
+          test: {
+            data: { name: "test" },
+            isLoading: false,
+            staled: false,
+            error: undefined,
+            lastFetchedTime: fakeCurrentDate.getTime(),
             staleTime: undefined,
             isFetched: true,
             isFetching: false,

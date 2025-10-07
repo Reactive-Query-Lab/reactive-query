@@ -47,13 +47,16 @@ export function invalidateKey<T>(
 
 export function setData<T>(
   store$: BehaviorSubject<{ [key: string]: BaseReactiveStore<T> }>,
+  emptyVaultOnNewValue?: boolean,
 ): (data: T, key: string) => void {
   return (data: T, key: string) => {
     const currentStore = store$.getValue();
-    const updatedStore = {
-      ...currentStore,
-      [key]: { ...currentStore[key], data },
-    };
+    const updatedStore = emptyVaultOnNewValue
+      ? { [key]: { ...currentStore[key], data } }
+      : {
+          ...currentStore,
+          [key]: { ...currentStore[key], data },
+        };
     store$.next(updatedStore);
   };
 }
