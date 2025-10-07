@@ -71,6 +71,7 @@ describe("createVault", () => {
             [key: string]: BaseReactiveStore<Data>;
           }>,
         );
+        console.log(store.store$);
         // ? Assert
         expect(data).toEqual({
           [newKey]: {
