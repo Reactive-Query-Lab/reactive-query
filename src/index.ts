@@ -1,5 +1,5 @@
 // Query Model exports
-export type { QueryResponse } from "./query/query-model";
+export type { QueryResponse, QueryModelConfigs } from "./query/query-model";
 export {
   default as ReactiveQueryModel,
   getInitQueryResponse,
@@ -11,7 +11,10 @@ export type {
   ReactiveQueryVault,
   QueryVaultEvents,
 } from "./store/query/store-type";
-export { default as createVault } from "./store/query/store";
+export {
+  default as createVault,
+  CacheInvalidationStrategy,
+} from "./store/query/store";
 
 // Command Model exports
 export type { CommandModelSubscribeResponse } from "./command/command-model";

@@ -1,4 +1,4 @@
-import createVault from "@/store/query/store";
+import createVault, { CacheInvalidationStrategy } from "@/store/query/store";
 import { BaseReactiveStore } from "@/store/query/store-type";
 import { firstValueFrom, lastValueFrom, Observable, take } from "rxjs";
 
@@ -82,80 +82,145 @@ describe("createVault", () => {
     });
 
     describe("caching", () => {
-      it("Should empty the store after the cache time", async () => {
-        // * Arrange
-        const fakeCurrentDate = new Date();
-        vi.useFakeTimers();
-        vi.setSystemTime(fakeCurrentDate);
-        const fakeCacheTime = 10000;
-        // ! Act
-        const store = createVault({
-          initalKey: "test",
-          initialValue: { name: "test" },
-          initCacheTime: fakeCacheTime,
-        });
-        await firstValueFrom(
-          store.store$ as Observable<{
-            [key: string]: BaseReactiveStore<Data>;
-          }>,
-        );
+      describe("On exist cache time", () => {
+        describe("On force strategy", () => {
+          it("Should empty the store after the cache time", async () => {
+            // * Arrange
+            const fakeCurrentDate = new Date();
+            vi.useFakeTimers();
+            vi.setSystemTime(fakeCurrentDate);
+            const fakeCacheTime = 10000;
+            // ! Act
+            const store = createVault({
+              initalKey: "test",
+              initialValue: { name: "test" },
+              initCacheTime: fakeCacheTime,
+              cacheInvalidationStrategy: CacheInvalidationStrategy.FORCE,
+            });
+            await firstValueFrom(
+              store.store$ as Observable<{
+                [key: string]: BaseReactiveStore<Data>;
+              }>,
+            );
 
-        vi.advanceTimersToNextTimer();
-        const data = await lastValueFrom(
-          store.store$.pipe(take(1)) as Observable<{
-            [key: string]: BaseReactiveStore<Data>;
-          }>,
-        );
-        // ? Assert
-        expect(data).toEqual({
-          test: {
-            data: { name: "test" },
-            isLoading: false,
-            staled: false,
-            error: undefined,
-            lastFetchedTime: new Date().getTime(),
-            staleTime: undefined,
-            isFetched: true,
-            isFetching: false,
-          },
+            vi.advanceTimersToNextTimer();
+            const data = await lastValueFrom(
+              store.store$.pipe(take(1)) as Observable<{
+                [key: string]: BaseReactiveStore<Data>;
+              }>,
+            );
+            // ? Assert
+            expect(data).toEqual({
+              test: {
+                data: { name: "test" },
+                isLoading: false,
+                staled: false,
+                error: undefined,
+                lastFetchedTime: new Date().getTime(),
+                staleTime: undefined,
+                isFetched: true,
+                isFetching: false,
+              },
+            });
+            vi.useRealTimers();
+          });
         });
-        vi.useRealTimers();
+
+        describe("On graceful strategy", () => {
+          it("Should clear cache when there is no observer and time is passed", async () => {
+            // * Arrange
+            const initialData = { name: "initial" };
+            const fakeKey = "test";
+            const fakeCurrentDate = new Date();
+            const fakeCacheTime = 10000;
+            vi.useFakeTimers();
+            vi.setSystemTime(fakeCurrentDate);
+            const store = createVault({
+              initalKey: fakeKey,
+              initialValue: initialData,
+              initCacheTime: fakeCacheTime,
+              cacheInvalidationStrategy: CacheInvalidationStrategy.GRACEFUL,
+            });
+            store.setData({ name: "test" }, fakeKey);
+            await firstValueFrom(
+              store.store$ as Observable<{
+                [key: string]: BaseReactiveStore<Data>;
+              }>,
+            );
+            vi.advanceTimersByTime(3 * fakeCacheTime);
+
+            const data = await lastValueFrom(store.store$.pipe(take(1)));
+            expect(data[fakeKey]?.data).toEqual(initialData);
+            vi.useRealTimers();
+          });
+
+          it("Should not invalidate the store if there is an observer", async () => {
+            // * Arrange
+            const fakeCurrentDate = new Date();
+            const fakeKey = "test";
+            const initialData = { name: "initial" };
+            vi.useFakeTimers();
+            vi.setSystemTime(fakeCurrentDate);
+            const fakeCacheTime = 10000;
+            const store = createVault({
+              initalKey: fakeKey,
+              initialValue: initialData,
+              initCacheTime: fakeCacheTime,
+            });
+            store.setData({ name: "test" }, fakeKey);
+            await firstValueFrom(
+              store.store$ as Observable<{
+                [key: string]: BaseReactiveStore<Data>;
+              }>,
+            );
+            vi.advanceTimersToNextTimer();
+            const data = await lastValueFrom(
+              store.store$.pipe(take(1)) as Observable<{
+                [key: string]: BaseReactiveStore<Data>;
+              }>,
+            );
+            expect(data[fakeKey]?.data).toEqual(initialData);
+            vi.useRealTimers();
+          });
+        });
       });
 
-      it("Should not invalidate the store if the cache time is null", async () => {
-        // * Arrange
-        const fakeCurrentDate = new Date();
-        vi.useFakeTimers();
-        vi.setSystemTime(fakeCurrentDate);
-        const store = createVault({
-          initalKey: "test",
-          initialValue: { name: "test" },
-          initCacheTime: null,
+      describe("On not exist cache time", () => {
+        it("Should not invalidate the store if the cache time is null", async () => {
+          // * Arrange
+          const fakeCurrentDate = new Date();
+          vi.useFakeTimers();
+          vi.setSystemTime(fakeCurrentDate);
+          const store = createVault({
+            initalKey: "test",
+            initialValue: { name: "test" },
+            initCacheTime: null,
+          });
+          await firstValueFrom(
+            store.store$ as Observable<{
+              [key: string]: BaseReactiveStore<Data>;
+            }>,
+          );
+          vi.advanceTimersToNextTimer();
+          const data = await lastValueFrom(
+            store.store$.pipe(take(1)) as Observable<{
+              [key: string]: BaseReactiveStore<Data>;
+            }>,
+          );
+          expect(data).toEqual({
+            test: {
+              data: { name: "test" },
+              isLoading: false,
+              staled: false,
+              error: undefined,
+              lastFetchedTime: fakeCurrentDate.getTime(),
+              staleTime: undefined,
+              isFetched: true,
+              isFetching: false,
+            },
+          });
+          vi.useRealTimers();
         });
-        await firstValueFrom(
-          store.store$ as Observable<{
-            [key: string]: BaseReactiveStore<Data>;
-          }>,
-        );
-        vi.advanceTimersToNextTimer();
-        const data = await lastValueFrom(
-          store.store$.pipe(take(1)) as Observable<{
-            [key: string]: BaseReactiveStore<Data>;
-          }>,
-        );
-        expect(data).toEqual({
-          test: {
-            data: { name: "test" },
-            isLoading: false,
-            staled: false,
-            error: undefined,
-            lastFetchedTime: fakeCurrentDate.getTime(),
-            staleTime: undefined,
-            isFetched: true,
-            isFetching: false,
-          },
-        });
-        vi.useRealTimers();
       });
     });
   });
