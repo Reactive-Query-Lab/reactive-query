@@ -4,7 +4,7 @@ import {
   ReactiveQueryVault,
 } from "@/store/query/store-type";
 import recursiveCallWithRetry, { isObject } from "@/helpers/functions";
-import createVault from "@/store/query/store";
+import createVault, { CacheInvalidationStrategy } from "@/store/query/store";
 
 export type QueryResponse<DATA = undefined> = Omit<
   BaseReactiveStore<DATA>,
@@ -38,6 +38,7 @@ export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
     maxRetryCall: number;
     cacheTime: number | null;
     emptyVaultOnNewValue: boolean;
+    cacheInvalidationStrategy: CacheInvalidationStrategy;
     initStore:
       | {
           key: string;
@@ -63,6 +64,14 @@ export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
       emptyVaultOnNewValue: false,
 
       /**
+       * Cache invalidation strategy,
+       * Default is GRACEFUL
+       * FORCE will clear the cache after the cache time, regardless of the observer count
+       * GRACEFUL will clear the cache only when there is no observer
+       */
+      cacheInvalidationStrategy: CacheInvalidationStrategy.GRACEFUL,
+
+      /**
        * Default store to init the vault with one default store
        */
       initStore: undefined,
@@ -73,6 +82,7 @@ export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
     this.store = createVault({
       emptyVaultOnNewValue: this.configs.emptyVaultOnNewValue,
       initCacheTime: this.configs.cacheTime,
+      cacheInvalidationStrategy: this.configs.cacheInvalidationStrategy,
       initalKey: this.configs.initStore?.key,
       initialValue: this.configs.initStore?.value,
       initStaleTime: this.configs.initStore?.staleTime,
