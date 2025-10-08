@@ -23,6 +23,13 @@ export const getInitQueryResponse = <DATA>(
   staled: false,
 });
 
+export type QueryModelConfigs<DATA> = {
+  maxRetryCall: number;
+  cacheTime: number | null;
+  emptyVaultOnNewValue: boolean;
+  cacheInvalidationStrategy?: CacheInvalidationStrategy;
+  initStore: { key: string; value: DATA; staleTime?: number } | undefined;
+};
 export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
   protected store: ReactiveQueryVault<DATA, EVENTS>;
 
@@ -34,19 +41,7 @@ export default abstract class ReactiveQueryModel<DATA, EVENTS = undefined> {
 
   private DEFAULT_CACHE_TIME = 3 * 60 * 1000; // 3 minute
 
-  protected get configs(): {
-    maxRetryCall: number;
-    cacheTime: number | null;
-    emptyVaultOnNewValue: boolean;
-    cacheInvalidationStrategy: CacheInvalidationStrategy;
-    initStore:
-      | {
-          key: string;
-          value: DATA;
-          staleTime?: number;
-        }
-      | undefined;
-  } {
+  protected get configs(): QueryModelConfigs<DATA> {
     return {
       /**
        * Maximum time to call refresh method on getting left response
