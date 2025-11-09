@@ -501,6 +501,8 @@ function TodoList() {
   );
 }
 ```
+> Note: This library act as the Model in the MV* architectures, highly suggested to be used beside of [ReactVVM](https://github.com/behnamrhp/React-VVM) which acts as the ViewModel and View in the MVVM. With these two approaches you can have solid MVVM architecture in your react application in any scale of projects.
+
 
 ### Svelte
 For now we don't have any adapter for Svelte but to see an example of how to use it with Svelte You can check this [gist](https://gist.github.com/behnamrhp/4058a739a551548ec1baddbe8a4ebe87)
