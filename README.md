@@ -462,7 +462,7 @@ resetStore(): void;
 
 For seamless React integration, we provide a dedicated React adapter library: [reactive-query-react](https://github.com/behnamrhp/reactive-query-react)
 
-> Note: This library act as the Model in the MV* architectures, highly suggested to be used beside of [ReactVVM]([https://github.com/Reactive-Query-Lab/reactive-query](https://github.com/behnamrhp/React-VVM)) which acts as the ViewModel and View in the MVVM. With these two approaches you can have solid MVVM architecture in your react application in any scale of projects.
+> Note: This library act as the Model in the MV* architectures, highly suggested to be used beside of [ReactVVM](https://github.com/behnamrhp/React-VVM) which acts as the ViewModel and View in the MVVM. With these two approaches you can have solid MVVM architecture in your react application in any scale of projects.
 
 #### Using the React Adapter (Recommended)
 
